@@ -200,3 +200,25 @@ class LineBallCarrier {
         this.curr.startUpdating(cb)
     }
 }
+
+class Renderer {
+
+    lbc : LineBallCarrier = new LineBallCarrier()
+    animator : Animator = new Animator()
+
+    render(context : CanvasRenderingContext2D) {
+        this.lbc.draw(context)
+    }
+
+    handleTap(cb : Function) {
+        this.lbc.startUpdating(() => {
+            this.animator.start(() => {
+                cb()
+                this.lbc.update(() => {
+                    this.animator.stop()
+                    cb()
+                })
+            })
+        })
+    }
+}
