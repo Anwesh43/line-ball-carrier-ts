@@ -6,6 +6,7 @@ const sizeFactor : number = 4.5
 const nodes : number = 5
 const foreColor : string = "#01579B"
 const backColor : string = "#bdbdbd"
+const delay : number = 30
 
 class Stage {
 
@@ -109,6 +110,26 @@ class State {
         if (this.dir == 0) {
             this.dir = 1 - 2 * this.prevScale
             cb()
+        }
+    }
+}
+
+class Animator {
+
+    animated : boolean = false
+    interval : number
+
+    start(cb : Function) {
+        if (!this.animated) {
+            this.animated = true
+            this.interval = setInterval(cb, delay)
+        }
+    }
+
+    stop() {
+        if (this.animated) {
+            this.animated = false
+            clearInterval(this.interval)
         }
     }
 }
