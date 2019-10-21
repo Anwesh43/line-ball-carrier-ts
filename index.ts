@@ -4,13 +4,13 @@ const scGap : number = 0.02
 const strokeFactor : number = 90
 const sizeFactor : number = 4.5
 const nodes : number = 5
-const foreColor : string = "#01579B"
+const foreColor : string = "green"
 const backColor : string = "#bdbdbd"
 const delay : number = 30
 
 class Stage {
 
-    canvas : HTMLCanvasElement
+    canvas : HTMLCanvasElement = document.createElement('canvas')
     context : CanvasRenderingContext2D
     renderer : Renderer = new Renderer()
 
@@ -73,15 +73,26 @@ class DrawingUtil {
         context.fill()
     }
 
-    static drawLineCircle(context : CanvasRenderingContext2D, size : number, scale : number) {
+    static drawLineCircle(context : CanvasRenderingContext2D, size : number, scale : number, circle : boolean, next : boolean) {
         const sc1 : number = ScaleUtil.divideScale(scale, 0, 2)
         const sf : number = ScaleUtil.sinify(scale, 1)
         const sf1 : number = ScaleUtil.sinify(sc1, 2)
-        DrawingUtil.drawLine(context, 0, 0, size * sf, 0)
-        DrawingUtil.drawCircle(context, size * sf1, 0, size / sizeFactor)
+        if (sf > 0) {
+            DrawingUtil.drawLine(context, 0, 0, size * sf, 0)
+        }
+        if (circle) {
+            DrawingUtil.drawCircle(context, size * sf1, 0, size / sizeFactor)
+        }
+        var lines = next ? 2 : 1
+        for (var i = 0; i < lines; i++) {
+            context.save()
+            context.translate(size * i, 0)
+            DrawingUtil.drawLine(context, -size / sizeFactor, size / sizeFactor, size / sizeFactor, size / sizeFactor)
+            context.restore()
+        }
     }
 
-    static drawLCNode(context : CanvasRenderingContext2D, i : number, scale : number) {
+    static drawLBCNode(context : CanvasRenderingContext2D, i : number, scale : number, currI : number) {
         const gap : number = w / (nodes + 2)
         context.lineCap = 'round'
         context.lineWidth = Math.min(w, h) / strokeFactor
@@ -89,7 +100,7 @@ class DrawingUtil {
         context.fillStyle = foreColor
         context.save()
         context.translate(gap * (i + 1), h / 2)
-        DrawingUtil.drawLineCircle(context, gap, scale)
+        DrawingUtil.drawLineCircle(context, gap, scale, currI == i, i == nodes - 1)
         context.restore()
     }
 }
@@ -102,7 +113,9 @@ class State {
 
     update(cb : Function) {
         this.scale += scGap * this.dir
+        console.log(this.scale)
         if (Math.abs(this.scale - this.prevScale) > 1) {
+            console.log("coming here")
             this.scale = this.prevScale + this.dir
             this.dir = 0
             this.prevScale = this.scale
@@ -133,6 +146,7 @@ class Animator {
     stop() {
         if (this.animated) {
             this.animated = false
+            console.log("stopping animator")
             clearInterval(this.interval)
         }
     }
@@ -144,7 +158,7 @@ class LBCNode {
     next : LBCNode
     state : State = new State()
 
-    constructor(private i : number) {
+    constructor(public i : number) {
         this.addNeighbor()
     }
 
@@ -155,10 +169,10 @@ class LBCNode {
         }
     }
 
-    draw(context : CanvasRenderingContext2D) {
-        DrawingUtil.drawLineCircle(context, this.i, this.state.scale)
+    draw(context : CanvasRenderingContext2D, currI : number) {
+        DrawingUtil.drawLBCNode(context, this.i, this.state.scale, currI)
         if (this.next) {
-            this.next.draw(context)
+            this.next.draw(context, currI)
         }
     }
 
@@ -185,11 +199,12 @@ class LBCNode {
 
 class LineBallCarrier {
 
-    curr : LBCNode = new LBCNode(0)
+    root : LBCNode = new LBCNode(0)
+    curr : LBCNode = this.root
     dir : number = 1
 
     draw(context : CanvasRenderingContext2D) {
-        this.curr.draw(context)
+        this.root.draw(context, this.curr.i)
     }
 
     update(cb : Function) {
@@ -197,6 +212,7 @@ class LineBallCarrier {
             this.curr = this.curr.getNext(this.dir, () => {
                 this.dir *= -1
             })
+            cb()
         })
     }
 
