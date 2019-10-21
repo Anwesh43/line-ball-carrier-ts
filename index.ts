@@ -9,7 +9,7 @@ const backColor : string = "#bdbdbd"
 
 class Stage {
 
-    canvas : HTMLCanvasElement 
+    canvas : HTMLCanvasElement
     context : CanvasRenderingContext2D
 
     initCanvas() {
@@ -35,5 +35,20 @@ class Stage {
         stage.initCanvas()
         stage.render()
         stage.handleTap()
+    }
+}
+
+class ScaleUtil {
+
+    static maxScale(scale : number, i : number, n : number) : number {
+        return Math.max(0, scale - i / n)
+    }
+
+    static divideScale(scale : number, i : number, n : number) : number {
+        return Math.min(1 / n, ScaleUtil.maxScale(scale, i, n)) * n
+    }
+
+    static sinify(scale : number, n : number) : number {
+        return Math.sin(scale * Math.PI / n)
     }
 }
